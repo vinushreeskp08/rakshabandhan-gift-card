@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RakshaBandhan Gift Card</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Roboto&display=swap');
+
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #fceabb 0%, #f8b500 100%);
+      overflow: hidden;
+      font-family: 'Roboto', sans-serif;
+      color: #3b2f2f;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      perspective: 1500px;
+    }
+
+    .scene {
+      width: 360px;
+      height: 360px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .box {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 1.8s ease-in-out;
+      cursor: pointer;
+      border-radius: 20px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+      user-select: none;
+      background: none;
+      transform-origin: center center;
+      z-index: 10;
+    }
+
+    .front,
+    .back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 20px;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 25px;
+      box-sizing: border-box;
+      top: 0;
+      left: 0;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      transform-style: preserve-3d;
+      user-select: text;
+    }
+
+    .front {
+      background: linear-gradient(135deg, #fa709a, #fee140);
+      color: #fff;
+      font-family: 'Great Vibes', cursive;
+      font-size: 2.2rem;
+      text-align: center;
+      box-shadow: 0 8px 15px rgba(250, 112, 154, 0.5);
+      transform: rotateY(0deg) translateZ(0);
+      z-index: 12;
+      user-select: none;
+    }
+
+    .front::after {
+      content: "🎁 Tap to Open";
+      position: absolute;
+      bottom: 20px;
+      font-size: 1.2rem;
+      font-family: 'Roboto', sans-serif;
+      color: #fff;
+      opacity: 0.8;
+      user-select: none;
+    }
+
+    .back {
+      background: #fff5e6;
+      color: #3b2f2f;
+      font-size: 1.15rem;
+      line-height: 1.3;
+      font-weight: 500;
+      font-family: 'Roboto', sans-serif;
+      text-align: center;
+      overflow-y: auto;
+      transform: rotateY(180deg) translateZ(0);
+      z-index: 11;
+      user-select: text;
+    }
+
+    /* Reduced spacing */
+    .dear-bhai {
+      margin-top: 15px;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 1.3rem;
+      color: #a44e4e;
+    }
+
+    .message {
+      white-space: pre-line;
+      line-height: 1.3;
+      margin: 0;
+    }
+
+    .box.opened {
+      transform: rotateY(180deg);
+    }
+
+    audio {
+      display: none;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Music -->
+  <audio autoplay loop>
+    <source src="An.mp3" type="audio/mpeg" />
+  </audio>
+
+  <!-- Fireworks & Petals Canvas -->
+  <canvas id="fw"></canvas>
+
+  <!-- Gift Card -->
+  <div class="scene">
+    <div class="box" id="box" onclick="openBox()">
+      <div class="front">
+        Happy Rakshabandhan Anna.. 💖
+      </div>
+      <div class="back">
+        <div class="message">
+          <div class="dear-bhai">Dear Anna...</div>
+          You are the thread of strength and support that binds our hearts forever.<br>
+          On this Rakshabandhan, I send you my love, wishes, and all the happiness you deserve!<br><br>
+          With all my heart, ❤️<br>
+          Your Sister
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("fw");
+    const ctx = canvas.getContext("2d");
+
+    let W, H;
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    const particles = [];
+    const petals = [];
+
+    // Color palette for petals: pink, red, orange, yellow, purple
+    const petalColors = [
+      'rgba(255, 182, 193, 0.8)',  // light pink
+      'rgba(255, 105, 180, 0.8)',  // hot pink
+      'rgba(255, 69, 0, 0.8)',     // red-orange
+      'rgba(255, 165, 0, 0.8)',    // orange
+      'rgba(255, 215, 0, 0.8)',    // gold yellow
+      'rgba(148, 0, 211, 0.8)',    // dark violet
+      'rgba(199, 21, 133, 0.8)'    // medium violet red
+    ];
+
+    class Particle {
+      constructor(x, y, type) {
+        this.x = x;
+        this.y = y;
+        this.type = type; // sparkle or firecrack
+
+        const angle = Math.random() * 2 * Math.PI;
+        const speed = (type === "sparkle") ? (1 + Math.random() * 2) : (2 + Math.random() * 3);
+        this.velX = Math.cos(angle) * speed;
+        this.velY = Math.sin(angle) * speed;
+
+        this.size = (type === "sparkle") ? (1 + Math.random() * 2) : (3 + Math.random() * 3);
+        this.alpha = 1;
+
+        this.colorBase = (type === "sparkle")
+          ? `255,${150 + Math.floor(Math.random() * 100)},0`
+          : `255,${100 + Math.floor(Math.random() * 155)},${Math.floor(Math.random() * 50)}`;
+
+        this.life = 40 + Math.random() * 30;
+        this.age = 0;
+      }
+
+      update() {
+        this.velY += 0.07; // gravity
+        this.x += this.velX;
+        this.y += this.velY;
+        this.age++;
+        this.alpha = 1 - this.age / this.life;
+
+        if (this.type === "firecrack") {
+          this.colorCurrent = `rgba(${this.colorBase},${0.5 + Math.random() * 0.5 * this.alpha})`;
+        } else {
+          this.colorCurrent = `rgba(${this.colorBase},${this.alpha})`;
+        }
+        this.size *= 0.95;
+      }
+
+      draw() {
+        ctx.beginPath();
+        if (this.type === "sparkle") {
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = `rgba(${this.colorBase},${this.alpha})`;
+          ctx.fillStyle = `rgba(${this.colorBase},${this.alpha})`;
+          ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        } else {
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = this.colorCurrent;
+          ctx.fillStyle = this.colorCurrent;
+          ctx.moveTo(this.x, this.y - this.size);
+          ctx.lineTo(this.x + this.size * 0.7, this.y + this.size);
+          ctx.lineTo(this.x - this.size * 0.7, this.y + this.size);
+          ctx.closePath();
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      }
+
+      isDead() {
+        return this.alpha <= 0 || this.size < 0.5 || this.y > H + 20 || this.x < -20 || this.x > W + 20;
+      }
+    }
+
+    class Petal {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * W;
+        this.y = -20 - Math.random() * 100;
+        this.size = 8 + Math.random() * 12;
+        this.speedY = 0.7 + Math.random() * 1.2;
+        this.speedX = 0.3 + Math.random() * 0.6;
+        this.swing = Math.random() * 2 * Math.PI;
+        this.swingSpeed = 0.02 + Math.random() * 0.02;
+        this.alpha = 0.8 + Math.random() * 0.2;
+        // Pick random petal color from palette
+        this.color = petalColors[Math.floor(Math.random() * petalColors.length)];
+        this.angle = Math.random() * 2 * Math.PI;
+        this.rotationSpeed = (Math.random() - 0.5) * 0.05;
+      }
+
+      update() {
+        this.y += this.speedY;
+        this.x += Math.sin(this.swing) * this.speedX;
+        this.swing += this.swingSpeed;
+        this.angle += this.rotationSpeed;
+
+        if (this.y > H + this.size) {
+          this.reset();
+        }
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.fillStyle = this.color;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 5;
+        ctx.beginPath();
+        // Simple flower petal shape (ellipse)
+        ctx.ellipse(0, 0, this.size * 0.6, this.size, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function explode(x, y) {
+      const sparkleCount = 30 + Math.floor(Math.random() * 20);
+      const firecrackCount = 15 + Math.floor(Math.random() * 10);
+      for (let i = 0; i < sparkleCount; i++) {
+        particles.push(new Particle(x, y, "sparkle"));
+      }
+      for (let i = 0; i < firecrackCount; i++) {
+        particles.push(new Particle(x, y, "firecrack"));
+      }
+    }
+
+    // Initialize petals
+    for (let i = 0; i < 30; i++) {
+      petals.push(new Petal());
+    }
+
+    let lastExplosionTime = 0;
+    const explosionInterval = 800; // ms
+
+    function loop(time = 0) {
+      ctx.clearRect(0, 0, W, H);
+
+      // Draw petals behind particles for nice layering
+      petals.forEach(petal => {
+        petal.update();
+        petal.draw();
+      });
+
+      // Update & draw particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.update();
+        p.draw();
+        if (p.isDead()) particles.splice(i, 1);
+      }
+
+      // Continuous random explosions (firecracks & sparkles) across the screen
+      if (time - lastExplosionTime > explosionInterval) {
+        const x = Math.random() * W * 0.8 + W * 0.1;
+        const y = Math.random() * H * 0.5 + H * 0.1;
+        explode(x, y);
+        lastExplosionTime = time;
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+
+    function openBox() {
+      const box = document.getElementById('box');
+      box.classList.toggle('opened');
+
+      // Big bursts around center on opening
+      const centerX = W / 2;
+      const centerY = H / 2.5;
+      explode(centerX, centerY);
+      explode(centerX - 100, centerY - 80);
+      explode(centerX + 120, centerY - 90);
+      explode(centerX + 140, centerY + 40);
+      explode(centerX - 120, centerY + 70);
+    }
+   </script>
+<script>
+  // Get your audio element
+  const audio = document.querySelector('audio');
+
+  // Enable music on first user interaction
+  function enableAudio() {
+    audio.play().catch(e => {
+      console.log("Autoplay blocked, waiting for user gesture");
+    });
+    // Remove this event listener after first interaction
+    document.body.removeEventListener('click', enableAudio);
+  }
+
+  // Add click/tap listener
+  document.body.addEventListener('click', enableAudio);
+</script>
+</body>
+</html>
